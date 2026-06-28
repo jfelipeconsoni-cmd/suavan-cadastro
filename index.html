@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Cadastro do aluno · Sua Van</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --yellow400:#FACC15;--yellow500:#FFC500;
+    --gray900:#111827;--gray800:#1F2937;--gray700:#374151;--gray600:#4B5563;
+    --gray500:#6B7280;--gray400:#9CA3AF;--gray300:#D1D5DB;--gray200:#E5E7EB;
+    --gray100:#F3F4F6;--gray50:#F9FAFB;--border:#D9D9D9;--red:#EF4444;--cream:#FFFBEB;--green:#16A34A;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--gray50);color:var(--gray900);
+    font-family:'Inter',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.4}
+  .wrap{max-width:480px;margin:0 auto;padding:20px 16px 48px}
+  .avatar{width:64px;height:64px;border-radius:50%;background:var(--yellow500);
+    display:flex;align-items:center;justify-content:center;margin:6px auto 14px}
+  .avatar svg{width:32px;height:32px}
+  h1{font-family:'Montserrat','Inter',sans-serif;font-size:22px;font-weight:700;text-align:center;margin:0 0 4px;color:var(--gray900)}
+  .sub{color:var(--gray500);text-align:center;font-size:13.5px;margin:0 0 18px}
+  .vancard{display:flex;gap:12px;align-items:center;background:var(--cream);
+    border:1px solid var(--yellow400);border-radius:12px;padding:14px;margin-bottom:6px}
+  .vancard .va{width:46px;height:46px;border-radius:50%;background:var(--yellow500);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .vancard .va svg{width:24px;height:24px}
+  .vc-role{font-size:11px;font-weight:700;letter-spacing:.6px;color:var(--gray400);text-transform:uppercase}
+  .vc-name{font-size:15px;font-weight:700;color:var(--gray900)}
+  .vc-van{font-size:13px;color:var(--gray600);margin-top:1px}
+  .sec{font-size:13px;font-weight:700;letter-spacing:.65px;color:var(--gray400);margin:22px 0 2px;text-transform:uppercase}
+  label{display:block;font-size:14px;font-weight:500;color:var(--gray700);margin:14px 0 7px}
+  input,select{width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:8px;
+    font-size:15px;font-family:inherit;color:var(--gray800);background:#fff}
+  input::placeholder{color:#B3B3B3}
+  input:focus,select:focus{outline:none;border-color:var(--yellow400);border-width:1.5px;padding:12.5px 13.5px}
+  .rowf{display:flex;gap:10px}.rowf>div{flex:1}
+  .card{background:#fff;border:1px solid var(--gray200);border-radius:12px;padding:14px;margin-top:12px}
+  button{width:100%;height:50px;border:0;border-radius:12px;background:var(--yellow400);
+    color:var(--gray900);font-size:15px;font-weight:700;font-family:inherit;margin-top:24px;cursor:pointer}
+  button:disabled{opacity:.6}
+  .add{background:#fff;border:1px solid var(--gray300);color:var(--gray800);font-weight:600;
+    font-size:14px;height:auto;padding:12px;margin-top:10px;border-radius:12px}
+  .msg{text-align:center;padding:30px 10px}.msg .big{font-size:46px;margin-bottom:6px}
+  .err{background:#FEF2F2;border:1px solid rgba(239,68,68,.3);color:var(--red);
+    font-size:13px;border-radius:8px;padding:10px 12px;margin-top:14px}
+  .hint{color:var(--gray500);font-size:11.5px;margin-top:5px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="avatar" id="topAvatar"></div>
+
+  <!-- Estados -->
+  <div id="loading" class="msg"><div class="sub">Carregando…</div></div>
+
+  <div id="error" class="hidden">
+    <div class="msg"><div class="big" id="errEmoji">⚠️</div>
+      <h1 id="errTitle">Link inválido</h1>
+      <p class="sub" id="errText">Confira o link enviado pelo motorista.</p></div>
+  </div>
+
+  <div id="success" class="hidden">
+    <div class="msg"><div class="big">✅</div>
+      <h1>Dados enviados!</h1>
+      <p class="sub">Obrigado! O motorista já pode ver as informações.</p></div>
+  </div>
+
+  <div id="formWrap" class="hidden">
+    <h1>Convite da sua van</h1>
+    <p class="sub">Complete os dados do seu filho para o transporte escolar.</p>
+
+    <div class="vancard">
+      <div class="va" id="vanAvatar"></div>
+      <div>
+        <div class="vc-role">Transporte escolar</div>
+        <div class="vc-name" id="vanName"></div>
+        <div class="vc-van" id="vanVehicle"></div>
+      </div>
+    </div>
+
+    <div id="formErr" class="err hidden"></div>
+
+    <form id="form">
+      <div class="sec">Dados do aluno</div>
+      <label>Nome completo do aluno</label>
+      <input id="full_name" maxlength="120" required>
+
+      <div class="sec">Endereço</div>
+      <label>CEP</label>
+      <input id="cep" inputmode="numeric" maxlength="9" placeholder="00000-000">
+      <p class="hint" id="cepHint"></p>
+      <label>Rua</label>
+      <input id="rua" maxlength="160">
+      <div class="rowf">
+        <div><label>Número</label><input id="numero" maxlength="10"></div>
+        <div><label>Bairro</label><input id="bairro" maxlength="120"></div>
+      </div>
+      <label>Complemento (opcional)</label>
+      <input id="complemento" maxlength="120" placeholder="Apto, bloco, referência">
+      <div class="rowf">
+        <div><label>Cidade</label><input id="cidade" maxlength="120"></div>
+        <div><label>UF</label><input id="uf" maxlength="2" placeholder="SP"></div>
+      </div>
+
+      <div class="sec">Responsáveis</div>
+      <div id="guardians"></div>
+      <button type="button" class="add" id="addG">+ Adicionar outro responsável</button>
+
+      <button type="submit" id="submitBtn">Enviar dados</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  var API = "https://upekeqdfgxtjftkdsvaj.supabase.co/functions/v1/passenger-intake";
+  var BUS = '<svg viewBox="0 0 24 24" fill="#1F2937" aria-hidden="true"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/></svg>';
+  document.getElementById('topAvatar').innerHTML = BUS;
+  document.getElementById('vanAvatar').innerHTML = BUS;
+
+  function $(id){return document.getElementById(id);}
+  function show(id){$(id).classList.remove('hidden');}
+  function hide(id){$(id).classList.add('hidden');}
+
+  var params = new URLSearchParams(location.search);
+  var token = params.get('token') || '';
+
+  var REASONS = {
+    invalid:  ['⚠️','Link inválido','Confira o link enviado pelo motorista.'],
+    expired:  ['⏰','Convite expirado','Peça um novo link ao motorista.'],
+    done:     ['✅','Dados já enviados','Este convite já foi preenchido. Obrigado!'],
+    network:  ['📶','Sem conexão','Verifique sua internet e tente novamente.']
+  };
+  function showError(reason){
+    var r = REASONS[reason] || REASONS.invalid;
+    $('errEmoji').textContent = r[0]; $('errTitle').textContent = r[1]; $('errText').textContent = r[2];
+    hide('loading'); hide('formWrap'); show('error');
+  }
+
+  function addGuardian(required){
+    var card = document.createElement('div');
+    card.className = 'card guardian';
+    card.innerHTML =
+      '<label>Nome do responsável</label>'+
+      '<input class="g-nome" maxlength="120" autocomplete="name" '+(required?'required':'')+'>'+
+      '<div class="rowf"><div><label>Telefone</label>'+
+      '<input class="g-tel" inputmode="tel" maxlength="20" placeholder="(11) 99999-9999" '+(required?'required':'')+'></div>'+
+      '<div><label>Quem é</label><select class="g-rel">'+
+      '<option>Mãe</option><option>Pai</option><option>Avó/Avô</option>'+
+      '<option>Tio/Tia</option><option>Responsável</option><option>Outro</option>'+
+      '</select></div></div>';
+    $('guardians').appendChild(card);
+  }
+
+  // Carrega os dados da van pelo token.
+  function init(){
+    if(!token){ showError('invalid'); return; }
+    fetch(API + '?token=' + encodeURIComponent(token))
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(!d || !d.ok){ showError(d && d.reason ? d.reason : 'invalid'); return; }
+        $('vanName').textContent = (d.van && d.van.driverName) || 'Motorista';
+        var v = d.van && d.van.vehicle;
+        var line = '';
+        if(v){ line = [v.model, v.color, v.plate ? ('placa '+v.plate) : ''].filter(Boolean).join(' · '); }
+        $('vanVehicle').textContent = line;
+        $('full_name').value = d.studentName || '';
+        addGuardian(true); addGuardian(false);
+        hide('loading'); show('formWrap');
+      })
+      .catch(function(){ showError('network'); });
+  }
+
+  // ViaCEP
+  document.addEventListener('blur', function(e){
+    if(e.target && e.target.id === 'cep'){
+      var v = (e.target.value||'').replace(/\D/g,'');
+      if(v.length !== 8) return;
+      $('cepHint').textContent = 'Buscando endereço...';
+      fetch('https://viacep.com.br/ws/'+v+'/json/').then(function(r){return r.json();}).then(function(d){
+        if(d.erro){ $('cepHint').textContent='CEP não encontrado.'; return; }
+        if(d.logradouro) $('rua').value=d.logradouro;
+        if(d.bairro) $('bairro').value=d.bairro;
+        if(d.localidade) $('cidade').value=d.localidade;
+        if(d.uf) $('uf').value=d.uf;
+        $('cepHint').textContent=''; $('numero').focus();
+      }).catch(function(){ $('cepHint').textContent=''; });
+    }
+  }, true);
+
+  var count = 0;
+  document.addEventListener('DOMContentLoaded', function(){
+    init();
+    $('addG').addEventListener('click', function(){
+      var n = document.querySelectorAll('.guardian').length;
+      if(n >= 4){ this.style.display='none'; return; }
+      addGuardian(false);
+      if(document.querySelectorAll('.guardian').length >= 4) this.style.display='none';
+    });
+    $('form').addEventListener('submit', function(e){
+      e.preventDefault();
+      var fe = $('formErr');
+      var fullName = $('full_name').value.trim();
+      if(!fullName){ fe.textContent='Informe o nome completo do aluno.'; show('formErr'); return; }
+      var guardians = [];
+      document.querySelectorAll('.guardian').forEach(function(c){
+        var nome = c.querySelector('.g-nome').value.trim();
+        var tel = c.querySelector('.g-tel').value.trim();
+        var rel = c.querySelector('.g-rel').value;
+        if(nome || tel) guardians.push({nome:nome, telefone:tel, parentesco:rel});
+      });
+      if(guardians.length === 0){ fe.textContent='Informe ao menos um responsável (nome e telefone).'; show('formErr'); return; }
+      hide('formErr');
+      var payload = {
+        token: token,
+        full_name: fullName,
+        address: {
+          cep:$('cep').value.trim(), rua:$('rua').value.trim(), numero:$('numero').value.trim(),
+          bairro:$('bairro').value.trim(), complemento:$('complemento').value.trim(),
+          cidade:$('cidade').value.trim(), uf:$('uf').value.trim()
+        },
+        guardians: guardians
+      };
+      var btn = $('submitBtn'); btn.disabled = true; btn.textContent = 'Enviando…';
+      fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d && d.ok){ hide('formWrap'); show('success'); window.scrollTo(0,0); }
+          else if(d && d.reason === 'done'){ showError('done'); }
+          else if(d && d.reason === 'expired'){ showError('expired'); }
+          else { fe.textContent='Não foi possível enviar. Verifique os dados e tente novamente.'; show('formErr'); btn.disabled=false; btn.textContent='Enviar dados'; }
+        })
+        .catch(function(){ fe.textContent='Sem conexão. Tente novamente.'; show('formErr'); btn.disabled=false; btn.textContent='Enviar dados'; });
+    });
+  });
+</script>
+</body>
+</html>
