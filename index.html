@@ -52,6 +52,21 @@
     font-size:13px;border-radius:8px;padding:10px 12px;margin-top:14px}
   .hint{color:var(--gray500);font-size:11.5px;margin-top:5px}
   .hidden{display:none}
+  /* Telefone do responsável: tipo (cel/fixo), máscara com +55 e marcador WhatsApp. */
+  .seg{display:flex;gap:8px;margin-top:2px}
+  .seg-btn{flex:1;height:auto;margin:0;padding:10px;border-radius:8px;font-size:13px;
+    background:#fff;border:1px solid var(--border);color:var(--gray900);font-weight:600}
+  .seg-btn.on{background:rgba(250,204,21,.14);border:1.5px solid var(--yellow400);font-weight:700}
+  .phonebox{display:flex;align-items:center;border:1px solid var(--border);border-radius:8px;background:#fff;overflow:hidden}
+  .phonebox:focus-within{border-color:var(--yellow400);border-width:1.5px}
+  .phonebox.bad{border-color:var(--red);border-width:1.5px}
+  .ddi{padding:13px 0 13px 14px;font-size:15px;color:var(--gray500);flex:0 0 auto}
+  .phonebox input,.phonebox input:focus{border:0;border-radius:0;padding:13px 12px}
+  .wa-chip{display:inline-flex;align-items:center;gap:6px;width:auto;height:auto;margin:10px 0 0;
+    padding:8px 12px;border-radius:999px;font-size:13px;font-weight:600;
+    background:#fff;border:1px solid var(--gray300);color:var(--gray500)}
+  .wa-chip.on{background:#E8FBEF;border:1.5px solid #128C4B;color:#0D6B3A}
+  .wa-chip .dot{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}
   /* Aviso de tratamento (LGPD art. 9º) + consentimento do responsável (art. 14 §1º). */
   .privacy{background:#fff;border:1px solid var(--gray200);border-radius:12px;padding:14px;
     margin-top:12px;font-size:12.5px;color:var(--gray600);line-height:1.55}
@@ -187,19 +202,63 @@
     hide('loading'); hide('formWrap'); show('error');
   }
 
+  // Máscara BR que trava no limite: celular 11 dígitos (com o 9), fixo 10 (sem o 9).
+  function fmtPhone(v, tipo){
+    var d=(v||'').replace(/\D/g,'').slice(0, tipo==='fixo'?10:11);
+    if(!d) return '';
+    if(d.length<2) return '('+d;
+    var o='('+d.slice(0,2)+') ', r=d.slice(2);
+    if(tipo==='fixo'){ o+=r.slice(0,4); if(r.length>4) o+='-'+r.slice(4,8); }
+    else { o+=r.slice(0,5); if(r.length>5) o+='-'+r.slice(5,9); }
+    return o;
+  }
+  function phoneComplete(c){
+    var d=c.querySelector('.g-tel').value.replace(/\D/g,'');
+    var tipo=c.getAttribute('data-type')||'cel';
+    return d.length===(tipo==='fixo'?10:11);
+  }
+
   function addGuardian(required){
     var card = document.createElement('div');
     card.className = 'card guardian';
+    card.setAttribute('data-type','cel');   // padrão: celular
+    card.setAttribute('data-wa','1');        // padrão: é WhatsApp (a maioria dos cel é)
     card.innerHTML =
       '<label>Nome do responsável</label>'+
       '<input class="g-nome" maxlength="120" autocomplete="name" '+(required?'required':'')+'>'+
-      '<div class="rowf"><div><label>Telefone</label>'+
-      '<input class="g-tel" inputmode="tel" maxlength="20" placeholder="(11) 99999-9999" '+(required?'required':'')+'></div>'+
-      '<div><label>Quem é</label><select class="g-rel">'+
-      '<option>Mãe</option><option>Pai</option><option>Avó/Avô</option>'+
-      '<option>Tio/Tia</option><option>Responsável</option><option>Outro</option>'+
-      '</select></div></div>';
+      '<label>Tipo de telefone</label>'+
+      '<div class="seg">'+
+        '<button type="button" class="seg-btn g-cel on">Celular</button>'+
+        '<button type="button" class="seg-btn g-fix">Fixo</button>'+
+      '</div>'+
+      '<label>Telefone</label>'+
+      '<div class="phonebox"><span class="ddi">+55</span>'+
+        '<input class="g-tel" inputmode="numeric" maxlength="16" placeholder="(11) 91234-5678" '+(required?'required':'')+'></div>'+
+      '<p class="hint g-hint">Celular: 11 dígitos com o 9.</p>'+
+      '<button type="button" class="wa-chip on g-wa"><span class="dot"></span>É WhatsApp</button>'+
+      '<label>Quem é</label><select class="g-rel">'+
+        '<option>Mãe</option><option>Pai</option><option>Avó/Avô</option>'+
+        '<option>Tio/Tia</option><option>Responsável</option><option>Outro</option>'+
+      '</select>';
     $('guardians').appendChild(card);
+
+    var tel=card.querySelector('.g-tel'), box=card.querySelector('.phonebox');
+    var cel=card.querySelector('.g-cel'), fix=card.querySelector('.g-fix');
+    var wa=card.querySelector('.g-wa'), hint=card.querySelector('.g-hint');
+
+    function reformat(){ tel.value=fmtPhone(tel.value, card.getAttribute('data-type')); box.classList.remove('bad'); }
+    function setWa(on){ card.setAttribute('data-wa', on?'1':'0'); wa.classList.toggle('on', on); }
+    function setType(t){
+      card.setAttribute('data-type', t);
+      cel.classList.toggle('on', t==='cel'); fix.classList.toggle('on', t==='fixo');
+      hint.textContent = t==='fixo' ? 'Fixo: 10 dígitos, sem o 9.' : 'Celular: 11 dígitos com o 9.';
+      setWa(t==='cel');   // WhatsApp liga no Celular, desliga no Fixo; o usuário alterna
+      reformat();
+    }
+    tel.addEventListener('input', reformat);
+    cel.addEventListener('click', function(){ setType('cel'); });
+    fix.addEventListener('click', function(){ setType('fixo'); });
+    wa.addEventListener('click', function(){ setWa(card.getAttribute('data-wa')!=='1'); });
   }
 
   // Carrega os dados da van pelo token.
@@ -260,14 +319,26 @@
       var fe = $('formErr');
       var fullName = $('full_name').value.trim();
       if(!fullName){ fe.textContent='Informe o nome completo do aluno.'; show('formErr'); return; }
-      var guardians = [];
+      var guardians = [], badPhone = null;
       document.querySelectorAll('.guardian').forEach(function(c){
         var nome = c.querySelector('.g-nome').value.trim();
         var tel = c.querySelector('.g-tel').value.trim();
         var rel = c.querySelector('.g-rel').value;
-        if(nome || tel) guardians.push({nome:nome, telefone:tel, parentesco:rel});
+        var tipo = c.getAttribute('data-type') || 'cel';
+        var isWa = c.getAttribute('data-wa') === '1';
+        c.querySelector('.phonebox').classList.remove('bad');
+        // Telefone digitado mas incompleto → bloqueia (a máscara já impede o excesso).
+        if(tel && !phoneComplete(c) && !badPhone) badPhone = c;
+        if(nome || tel) guardians.push({nome:nome, telefone:tel, parentesco:rel, tipo:tipo, is_whatsapp:isWa});
       });
       if(guardians.length === 0){ fe.textContent='Informe ao menos um responsável (nome e telefone).'; show('formErr'); return; }
+      if(badPhone){
+        badPhone.querySelector('.phonebox').classList.add('bad');
+        fe.textContent='Confira o telefone do responsável — faltam dígitos.';
+        show('formErr');
+        badPhone.querySelector('.phonebox').scrollIntoView({behavior:'smooth', block:'center'});
+        return;
+      }
       // Consentimento é obrigatório. A API recusa o envio sem ele de qualquer forma;
       // aqui a checagem existe pra dar um erro claro em vez de uma falha genérica.
       if(!$('consent').checked){
