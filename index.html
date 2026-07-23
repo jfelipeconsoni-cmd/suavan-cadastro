@@ -52,6 +52,19 @@
     font-size:13px;border-radius:8px;padding:10px 12px;margin-top:14px}
   .hint{color:var(--gray500);font-size:11.5px;margin-top:5px}
   .hidden{display:none}
+  /* Aviso de tratamento (LGPD art. 9º) + consentimento do responsável (art. 14 §1º). */
+  .privacy{background:#fff;border:1px solid var(--gray200);border-radius:12px;padding:14px;
+    margin-top:12px;font-size:12.5px;color:var(--gray600);line-height:1.55}
+  .privacy strong{color:var(--gray800)}
+  .privacy ul{margin:8px 0 0;padding-left:18px}
+  .privacy li{margin-bottom:3px}
+  .privacy a{color:var(--gray800)}
+  /* Destacado por exigência legal: o consentimento não pode se perder no meio do texto. */
+  .consent{display:flex;gap:11px;align-items:flex-start;background:var(--cream);
+    border:1.5px solid var(--yellow400);border-radius:12px;padding:14px;margin-top:12px}
+  .consent input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;margin:1px 0 0;accent-color:var(--gray900)}
+  .consent label{margin:0;font-size:13.5px;font-weight:500;color:var(--gray800);line-height:1.5;cursor:pointer}
+  .consent.bad{border-color:var(--red);background:#FEF2F2}
 </style>
 </head>
 <body>
@@ -114,6 +127,29 @@
       <div id="guardians"></div>
       <button type="button" class="add" id="addG">+ Adicionar outro responsável</button>
 
+      <div class="sec">Privacidade</div>
+      <div class="privacy">
+        Os dados acima são usados <strong>somente</strong> para organizar o transporte escolar
+        e ficam visíveis para <strong id="pvDriver">o motorista</strong>, responsável pela van.
+        <ul>
+          <li>Coletamos nome do aluno, endereço de embarque e nome/telefone dos responsáveis.</li>
+          <li>Não vendemos esses dados nem os usamos para publicidade.</li>
+          <li>Você pode pedir acesso, correção ou exclusão a qualquer momento pelo motorista
+              ou por <strong>suporte@suavan.com.br</strong>.</li>
+        </ul>
+        <span id="policyLink"></span>
+      </div>
+
+      <div class="consent" id="consentBox">
+        <!-- Sem `required`: a validação nativa do checkbox curto-circuitaria o handler de
+             submit, que dá um aviso mais visível (banner + caixa vermelha + scroll). A
+             barreira real é o servidor (a Edge Function recusa sem consent.accepted). -->
+        <input type="checkbox" id="consent">
+        <label for="consent">Declaro que sou <strong>responsável legal</strong> pelo aluno e
+          <strong>autorizo</strong> o tratamento dos dados informados acima para a finalidade
+          de transporte escolar.</label>
+      </div>
+
       <button type="submit" id="submitBtn">Enviar dados</button>
     </form>
   </div>
@@ -121,6 +157,13 @@
 
 <script>
   var API = "https://epztazlbehsnfejrefjh.supabase.co/functions/v1/passenger-intake";
+  // Versão do texto de consentimento. Ao MUDAR o texto da checkbox, incrementar aqui —
+  // é isso que prova, depois, sobre qual redação a pessoa consentiu.
+  var CONSENT_VERSION = "1.0";
+  // Quando suavan.com.br/privacidade estiver no ar, basta preencher esta constante que o
+  // link aparece sozinho no aviso. Enquanto for null, o aviso se sustenta por si —
+  // o art. 9º pede informação clara e acessível, e link quebrado não é acessível.
+  var POLICY_URL = null;
   var BUS = '<svg viewBox="0 0 24 24" fill="#1F2937" aria-hidden="true"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/></svg>';
   document.getElementById('topAvatar').innerHTML = BUS;
   document.getElementById('vanAvatar').innerHTML = BUS;
@@ -172,6 +215,14 @@
         if(v){ line = [v.model, v.color, v.plate ? ('placa '+v.plate) : ''].filter(Boolean).join(' · '); }
         $('vanVehicle').textContent = line;
         $('full_name').value = d.studentName || '';
+        // Nomear o motorista no aviso: "com quem os dados são compartilhados" deixa de
+        // ser abstrato, que é o ponto do art. 9º.
+        var dn = (d.van && d.van.driverName) || '';
+        if(dn) $('pvDriver').textContent = dn;
+        if(POLICY_URL){
+          $('policyLink').innerHTML = 'Leia a <a href="'+POLICY_URL+
+            '" target="_blank" rel="noopener">Política de Privacidade</a> completa.';
+        }
         addGuardian(true); addGuardian(false);
         hide('loading'); show('formWrap');
       })
@@ -217,6 +268,16 @@
         if(nome || tel) guardians.push({nome:nome, telefone:tel, parentesco:rel});
       });
       if(guardians.length === 0){ fe.textContent='Informe ao menos um responsável (nome e telefone).'; show('formErr'); return; }
+      // Consentimento é obrigatório. A API recusa o envio sem ele de qualquer forma;
+      // aqui a checagem existe pra dar um erro claro em vez de uma falha genérica.
+      if(!$('consent').checked){
+        $('consentBox').classList.add('bad');
+        fe.textContent='Para enviar, é preciso autorizar o tratamento dos dados.';
+        show('formErr');
+        $('consentBox').scrollIntoView({behavior:'smooth', block:'center'});
+        return;
+      }
+      $('consentBox').classList.remove('bad');
       hide('formErr');
       var payload = {
         token: token,
@@ -226,7 +287,10 @@
           bairro:$('bairro').value.trim(), complemento:$('complemento').value.trim(),
           cidade:$('cidade').value.trim(), uf:$('uf').value.trim()
         },
-        guardians: guardians
+        guardians: guardians,
+        // O servidor carimba a data com o relógio dele; aqui só declaramos o aceite
+        // e a versão do texto aceito.
+        consent: { accepted: true, version: CONSENT_VERSION }
       };
       var btn = $('submitBtn'); btn.disabled = true; btn.textContent = 'Enviando…';
       fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)})
@@ -235,6 +299,11 @@
           if(d && d.ok){ hide('formWrap'); show('success'); window.scrollTo(0,0); }
           else if(d && d.reason === 'done'){ showError('done'); }
           else if(d && d.reason === 'expired'){ showError('expired'); }
+          else if(d && d.reason === 'missing_consent'){
+            $('consentBox').classList.add('bad');
+            fe.textContent='Para enviar, é preciso autorizar o tratamento dos dados.';
+            show('formErr'); btn.disabled=false; btn.textContent='Enviar dados';
+          }
           else { fe.textContent='Não foi possível enviar. Verifique os dados e tente novamente.'; show('formErr'); btn.disabled=false; btn.textContent='Enviar dados'; }
         })
         .catch(function(){ fe.textContent='Sem conexão. Tente novamente.'; show('formErr'); btn.disabled=false; btn.textContent='Enviar dados'; });
