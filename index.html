@@ -51,6 +51,7 @@
   .err{background:#FEF2F2;border:1px solid rgba(239,68,68,.3);color:var(--red);
     font-size:13px;border-radius:8px;padding:10px 12px;margin-top:14px}
   .hint{color:var(--gray500);font-size:11.5px;margin-top:5px}
+  .req{color:var(--red);font-weight:700}
   .hidden{display:none}
   /* Telefone do responsável: tipo (cel/fixo), máscara com +55 e marcador WhatsApp. */
   .seg{display:flex;gap:8px;margin-top:2px}
@@ -118,27 +119,29 @@
 
     <form id="form">
       <div class="sec">Dados do aluno</div>
-      <label>Nome completo do aluno</label>
+      <label>Nome completo do aluno <span class="req">*</span></label>
       <input id="full_name" maxlength="120" required>
 
       <div class="sec">Endereço</div>
-      <label>CEP</label>
+      <p class="hint" style="margin:0 0 4px">Digite o CEP que a gente preenche o resto. Se não achar, dá pra completar à mão.</p>
+      <label>CEP <span class="req">*</span></label>
       <input id="cep" inputmode="numeric" maxlength="9" placeholder="00000-000">
       <p class="hint" id="cepHint"></p>
-      <label>Rua</label>
+      <label>Rua <span class="req">*</span></label>
       <input id="rua" maxlength="160">
       <div class="rowf">
-        <div><label>Número</label><input id="numero" maxlength="10"></div>
-        <div><label>Bairro</label><input id="bairro" maxlength="120"></div>
+        <div><label>Número <span class="req">*</span></label><input id="numero" maxlength="10"></div>
+        <div><label>Bairro <span class="req">*</span></label><input id="bairro" maxlength="120"></div>
       </div>
       <label>Complemento (opcional)</label>
       <input id="complemento" maxlength="120" placeholder="Apto, bloco, referência">
       <div class="rowf">
-        <div><label>Cidade</label><input id="cidade" maxlength="120"></div>
-        <div><label>UF</label><input id="uf" maxlength="2" placeholder="SP"></div>
+        <div><label>Cidade <span class="req">*</span></label><input id="cidade" maxlength="120"></div>
+        <div><label>UF <span class="req">*</span></label><input id="uf" maxlength="2" placeholder="SP"></div>
       </div>
 
       <div class="sec">Responsáveis</div>
+      <p class="hint" style="margin:0 0 4px">Cadastre pelo menos um. Vale incluir mais de um contato — assim a gente sempre consegue avisar alguém.</p>
       <div id="guardians"></div>
       <button type="button" class="add" id="addG">+ Adicionar outro responsável</button>
 
@@ -282,7 +285,7 @@
           $('policyLink').innerHTML = 'Leia a <a href="'+POLICY_URL+
             '" target="_blank" rel="noopener">Política de Privacidade</a> completa.';
         }
-        addGuardian(true); addGuardian(false);
+        addGuardian(true);   // só um frame; o pai clica em "Adicionar" p/ mais
         hide('loading'); show('formWrap');
       })
       .catch(function(){ showError('network'); });
@@ -319,6 +322,17 @@
       var fe = $('formErr');
       var fullName = $('full_name').value.trim();
       if(!fullName){ fe.textContent='Informe o nome completo do aluno.'; show('formErr'); return; }
+      // Endereço obrigatório. O CEP preenche automático, mas dá pra completar à mão.
+      var addr = [['cep','CEP'],['rua','Rua'],['numero','Número'],['bairro','Bairro'],['cidade','Cidade'],['uf','UF']];
+      addr.forEach(function(f){ $(f[0]).style.borderColor=''; });
+      var faltaAddr = null;
+      for(var i=0;i<addr.length;i++){ if(!$(addr[i][0]).value.trim()){ faltaAddr=addr[i]; break; } }
+      if(faltaAddr){
+        $(faltaAddr[0]).style.borderColor='var(--red)';
+        fe.textContent='Complete o endereço — falta '+faltaAddr[1]+'.';
+        show('formErr'); $(faltaAddr[0]).scrollIntoView({behavior:'smooth', block:'center'}); $(faltaAddr[0]).focus();
+        return;
+      }
       var guardians = [], badPhone = null;
       document.querySelectorAll('.guardian').forEach(function(c){
         var nome = c.querySelector('.g-nome').value.trim();
