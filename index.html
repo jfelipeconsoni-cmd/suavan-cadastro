@@ -153,7 +153,7 @@
           <li>Coletamos nome do aluno, endereço de embarque e nome/telefone dos responsáveis.</li>
           <li>Não vendemos esses dados nem os usamos para publicidade.</li>
           <li>Você pode pedir acesso, correção ou exclusão a qualquer momento pelo motorista
-              ou por <strong>suporte@suavan.com.br</strong>.</li>
+              ou por <strong>privacidade@suavan.com.br</strong>.</li>
         </ul>
         <span id="policyLink"></span>
       </div>
@@ -175,13 +175,15 @@
 
 <script>
   var API = "https://epztazlbehsnfejrefjh.supabase.co/functions/v1/passenger-intake";
-  // Versão do texto de consentimento. Ao MUDAR o texto da checkbox, incrementar aqui —
+  // Versão do texto de consentimento. Ao MUDAR o texto da checkbox ou do aviso acima dela,
+  // incrementar aqui —
   // é isso que prova, depois, sobre qual redação a pessoa consentiu.
-  var CONSENT_VERSION = "1.0";
-  // Quando suavan.com.br/privacidade estiver no ar, basta preencher esta constante que o
-  // link aparece sozinho no aviso. Enquanto for null, o aviso se sustenta por si —
+  var CONSENT_VERSION = "1.1";
+  // Aponta para o Aviso de privacidade — dados de alunos e responsáveis (publicado em
+  // 21/09/2026), escrito para quem não tem conta no app. Enquanto foi null, o aviso se
+  // sustentou por si —
   // o art. 9º pede informação clara e acessível, e link quebrado não é acessível.
-  var POLICY_URL = null;
+  var POLICY_URL = "https://suavan.com.br/privacidade/alunos/";
   var BUS = '<svg viewBox="0 0 24 24" fill="#1F2937" aria-hidden="true"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/></svg>';
   document.getElementById('topAvatar').innerHTML = BUS;
   document.getElementById('vanAvatar').innerHTML = BUS;
@@ -282,8 +284,8 @@
         var dn = (d.van && d.van.driverName) || '';
         if(dn) $('pvDriver').textContent = dn;
         if(POLICY_URL){
-          $('policyLink').innerHTML = 'Leia a <a href="'+POLICY_URL+
-            '" target="_blank" rel="noopener">Política de Privacidade</a> completa.';
+          $('policyLink').innerHTML = 'Leia o <a href="'+POLICY_URL+
+            '" target="_blank" rel="noopener">Aviso de privacidade — dados de alunos e responsáveis</a> completo.';
         }
         addGuardian(true);   // só um frame; o pai clica em "Adicionar" p/ mais
         hide('loading'); show('formWrap');
