@@ -152,8 +152,12 @@
         <ul>
           <li>Coletamos nome do aluno, endereço de embarque e nome/telefone dos responsáveis.</li>
           <li>Não vendemos esses dados nem os usamos para publicidade.</li>
+          <li>Quando o motorista gera o recibo de uma mensalidade, o Sua Van guarda uma cópia,
+              com o nome do aluno e o do responsável, até 31 de dezembro do 6º ano depois do
+              ano do pagamento, mesmo que o aluno saia da van.</li>
           <li>Você pode pedir acesso, correção ou exclusão a qualquer momento pelo motorista
-              ou por <strong>privacidade@suavan.com.br</strong>.</li>
+              ou por <strong>privacidade@suavan.com.br</strong>. A cópia dos recibos só se
+              apaga pelo e-mail.</li>
         </ul>
         <span id="policyLink"></span>
       </div>
@@ -176,11 +180,15 @@
 <script>
   var API = "https://epztazlbehsnfejrefjh.supabase.co/functions/v1/passenger-intake";
   // Versão do texto de consentimento. Ao MUDAR o texto da checkbox ou do aviso acima dela,
-  // incrementar aqui —
+  // ou quando o Aviso de POLICY_URL ganhar versão nova, incrementar aqui —
   // é isso que prova, depois, sobre qual redação a pessoa consentiu.
-  // 1.2 (07/10/2026): o texto da página não mudou; sobe junto com o Aviso de privacidade
-  // dos alunos 1.1 (Política 1.5), que passou a explicar a cópia do recibo da mensalidade.
-  // Só os envios novos gravam 1.2.
+  // Cada versão, e o Aviso que valia com ela (o topo do Aviso repete esta ligação):
+  //   1.0 — texto original, canal suporte@, sem link para aviso;
+  //   1.1 (21/09/2026) — canal privacidade@ e link para o Aviso dos alunos 1.0;
+  //   1.2 (07/10/2026) — linha da cópia do recibo da mensalidade (guarda até 31/12 do
+  //         6º ano) e "a cópia dos recibos só se apaga pelo e-mail"; Aviso dos alunos 1.1
+  //         (Política 1.5).
+  // Só os envios novos gravam a versão nova.
   var CONSENT_VERSION = "1.2";
   // Aponta para o Aviso de privacidade — dados de alunos e responsáveis (publicado em
   // 21/09/2026), escrito para quem não tem conta no app. Enquanto foi null, o aviso se
